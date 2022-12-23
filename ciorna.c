@@ -249,18 +249,66 @@ void save_cmd(unsigned char **line, unsigned char **im_bw, unsigned char **im_gr
     printf("Saved %s\n", filename);
 }
 
+int check_existence(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color)
+{
+    if (im_bw == NULL && im_gray == NULL && im_color == NULL) {
+        printf("No image loaded\n");
+        return 0;
+    }
+    return 1;
+}
+
+void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width, int output)
+{
+    *x1 = 0;
+    *y1 = 0;
+    *x2 = width + 1;
+    *y2 = height + 1;
+    if (output)
+        printf("Selected ALL\n");
+}
+
+void interschimba(int *x, int *y)
+{
+    int *aux = x;
+    x = y;
+    y = aux;
+}
+
+void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int width)
+{
+    unsigned char *aux2 = malloc(2 * sizeof(unsigned char));
+    int x1nou, y1nou, x2nou, y2nou;
+    int rc = sscanf(line, "%s%d%d%d%d", aux2, &x1nou, &y1nou, &x2nou, &y2nou);
+    if (x1nou > x2nou)
+        interschimba(&x1nou, &x2nou);
+    if (y1nou > y2nou)
+        interschimba(&y1nou, &y2nou);
+    if (x1nou < 0 || x1nou >  width + 1 || y1nou < 0 || y2nou > height + 1 || x2nou < 0 || x2nou > width + 1 || y2nou < 0 || y2nou > height + 1) {
+        printf("Invalid coordinates\n");
+        return;
+    }
+    *x1 = x1nou;
+    *y1 = y1nou;
+    *x2 = x2nou;
+    *y2 = y2nou;
+    printf("Selected %d %d %d %d \n", *x1, *y1, *x2, *y2);
+}
+
 int main(void)
 {
     unsigned char *line = malloc(100 * sizeof(unsigned char));
     unsigned char **im_bw = NULL, **im_gray = NULL;
     colored_image **im_color = NULL;
     int height = 0, width = 0;
+    int x1, x2, y1, y2;
 
     while (fgets(line, 100, stdin)) {
         if (strstr(line, "LOAD")) {
             unsigned char *filename = strstr(line, "LOAD") + strlen("LOAD") + 1;
             filename[strlen(filename)-1] = '\0';
             load_cmd(filename, &im_bw, &im_gray, &im_color, &height, &width);
+            select_all(&x1, &y1, &x2, &y2, height, width, 0);
         }
         else {
             if (strstr(line, "EXIT"))
@@ -270,6 +318,19 @@ int main(void)
             } else {
                 if (strstr(line, "SAVE")) {
                     save_cmd(&line, im_bw, im_gray, im_color, height, width);
+                } else {
+                    if (strstr(line, "SELECT ALL")) {
+                        if (check_existence(im_bw, im_gray, im_color));
+                            select_all(&x1, &y1, &x2, &y2, height, width, 1);
+                    } else {
+                        if (strstr(line, "SELECT")) ;
+                            if (check_existence(im_bw, im_gray, im_color))
+                                select_cmd(line, &x1, &y1, &x2, &y2, height, width);
+                            else;
+                        /*else {
+
+                        }*/
+                    }
                 }
             }
         }
