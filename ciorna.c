@@ -1,10 +1,70 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 typedef struct {
     unsigned char R, G, B;
 } colored_image;
+
+typedef struct {
+    char *name;
+    int **kernel;
+    int divide;
+} filter;
+
+int iscorner(int x, int y)
+{
+    if (x == 0 && y == 0)
+        return 1;
+    if (x == 0 && y == 2)
+        return 1;
+    if (x == 2 && y == 0)
+        return 1;
+    if (x == 2 && y == 2)
+        return 1;
+    return 0;
+}
+
+filter *define_filters()
+{
+    filter *f = malloc(4 * sizeof(filter));
+    for (int i = 0; i < 4; i++) {
+        f[i].name = malloc(15 * sizeof(unsigned char));
+        f[i].kernel = malloc(3 * sizeof(int*));
+        for (int j = 0; j < 4; j++)
+            f[i].kernel[j] = malloc(3 * sizeof(int));
+    }
+
+    strcpy(f[0].name, "EDGE");
+    strcpy(f[1].name, "SHARPEN");
+    strcpy(f[2].name, "BLUR");
+    strcpy(f[3].name, "GAUSSIAN_BLUR");
+
+    f[0].divide = 1;
+    f[1].divide = 1;
+    f[2].divide = 9;
+    f[3].divide = 16;
+
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++) {
+            f[2].kernel[i][j] = 1;
+            f[0].kernel[i][j] = -1;
+            if (iscorner(i, j)) {
+                f[1].kernel[i][j] = 0;
+                f[3].kernel[i][j] = 1;
+            } else
+            {
+                f[1].kernel[i][j] = -1;
+                f[3].kernel[i][j] = 2;
+            }
+        }
+    f[1].kernel[1][1] = 5;
+    f[3].kernel[1][1] = 4;
+    f[0].kernel[1][1] = 8;
+
+    return f;
+}
 
 int image_type(unsigned char *filename)
 {
@@ -302,7 +362,7 @@ void save_color(unsigned char *filename, colored_image **im, int height, int wid
         fprintf(out, "255\n");
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++)
-                fprintf(out, "%hhu %hhu %hhu", im[i][j].R, im[i][j].G, im[i][j].B);
+                fprintf(out, "%hhu %hhu %hhu ", im[i][j].R, im[i][j].G, im[i][j].B);
             fprintf(out, "\n");
         }
         fclose(out);
@@ -361,8 +421,8 @@ void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width, int o
 {
     *x1 = 0;
     *y1 = 0;
-    *x2 = width + 1;
-    *y2 = height + 1;
+    *x2 = width;
+    *y2 = height;
     if (output)
         printf("Selected ALL\n");
 }
@@ -374,7 +434,7 @@ void interschimba(int *x, int *y)
     y = aux;
 }
 
-void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int width)
+void select_cmd(unsigned char *line, int *x1, int *y1, int *x2, int *y2, int height, int width)
 {
     unsigned char *aux2 = malloc(2 * sizeof(unsigned char));
     int x1nou, y1nou, x2nou, y2nou;
@@ -383,7 +443,7 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int 
         interschimba(&x1nou, &x2nou);
     if (y1nou > y2nou)
         interschimba(&y1nou, &y2nou);
-    if (x1nou < 0 || x1nou >  width + 1 || y1nou < 0 || y2nou > height + 1 || x2nou < 0 || x2nou > width + 1 || y2nou < 0 || y2nou > height + 1) {
+    if (x1nou < 0 || x1nou >  width || y1nou < 0 || y2nou > height || x2nou < 0 || x2nou > width || y2nou < 0 || y2nou > height) {
         printf("Invalid coordinates\n");
         return;
     }
@@ -394,6 +454,59 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int 
     printf("Selected %d %d %d %d \n", *x1, *y1, *x2, *y2);
 }
 
+unsigned char clamp(int x, int low, int high)
+{
+    if (x < low)
+        return (unsigned char)low;
+    if (x > high)
+        return (unsigned char)high;
+    return (unsigned char)x;
+}
+
+colored_image apply_pixel(filter *f, int type, colored_image **im, int x, int y)
+{
+    colored_image ans;
+    double val1 = 0, val2 = 0, val3 = 0;
+    for (int i = 0; i < 3; i++)
+        for(int j = 0; j < 3; j++) {
+            val1 += ((int)im[x + i][y + j].R) * f[type].kernel[i][j];
+            val2 += ((int)im[x + i][y + j].G) * f[type].kernel[i][j];
+            val3 += ((int)im[x + i][y + j].B) * f[type].kernel[i][j];
+        }
+    val1 = round(1.0 * val1 / f[type].divide);
+    val2 = round(1.0 * val2 / f[type].divide);
+    val3 = round(1.0 * val3 / f[type].divide);
+    ans.R = clamp((int)val1, 0, 255);
+    ans.B = clamp((int)val2, 0, 255);
+    ans.G = clamp((int)val3, 0, 255);
+
+    return ans;
+}
+
+void apply_cmd(unsigned char *line, unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int x1, int y1, int x2, int y2, filter *f)
+{
+    line[strlen(line) - 1] = '\0';
+    unsigned char *filter = strstr(line, "APPLY") + strlen("APPLY") + 1;
+    int type;
+
+    if (!check_existence(im_bw, im_gray, im_color))
+        return;
+
+    if (im_bw || im_gray) {
+        printf("Easy, Charlie Chaplin\n");
+        return;
+    }
+
+    for (int i = 0; i < 4; i++)
+        if (strcmp(filter, f[i].name) == 0)
+            type = i;
+
+    for (int i = y1; i <= y2 - 3; i++)
+        for (int j = x1; j <= x2 - 3; j++) {
+            im_color[i][j] = apply_pixel(f, type, im_color, i, j);
+        }
+}
+
 int main(void)
 {
     unsigned char *line = malloc(100 * sizeof(unsigned char));
@@ -401,6 +514,7 @@ int main(void)
     colored_image **im_color = NULL;
     int height = 0, width = 0;
     int x1, x2, y1, y2;
+    filter *my_filters = define_filters();
 
     while (fgets(line, 100, stdin)) {
         if (strstr(line, "LOAD")) {
@@ -422,13 +536,15 @@ int main(void)
                         if (check_existence(im_bw, im_gray, im_color));
                             select_all(&x1, &y1, &x2, &y2, height, width, 1);
                     } else {
-                        if (strstr(line, "SELECT")) ;
+                        if (strstr(line, "SELECT"))
                             if (check_existence(im_bw, im_gray, im_color))
                                 select_cmd(line, &x1, &y1, &x2, &y2, height, width);
                             else;
-                        /*else {
-
-                        }*/
+                        else {
+                            if (strstr(line, "APPLY")) {
+                                apply_cmd(line, im_bw, im_gray, im_color, x1, y1, x2, y2, my_filters);
+                            }
+                        }
                     }
                 }
             }
