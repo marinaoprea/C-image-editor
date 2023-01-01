@@ -32,7 +32,7 @@ filter *define_filters()
     for (int i = 0; i < 4; i++) {
         f[i].name = malloc(15 * sizeof(unsigned char));
         f[i].kernel = malloc(3 * sizeof(int*));
-        for (int j = 0; j < 4; j++)
+        for (int j = 0; j < 3; j++)
             f[i].kernel[j] = malloc(3 * sizeof(int));
     }
 
@@ -322,7 +322,7 @@ void load_cmd(unsigned char *filename, unsigned char ***im_bw, unsigned char ***
     printf("Loaded %s\n", filename);
 }
 
-void exit_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height)
+void exit_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, filter *f)
 {
     if (im_bw != NULL)
         free_matrix_bw(im_bw, height);
@@ -330,6 +330,13 @@ void exit_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im
         free_matrix_bw(im_gray, height);
     if (im_color != NULL)
         free_matrix_color(im_color, height);
+    for (int i = 0; i < 4; i++) {
+        free(f[i].name);
+        for (int j = 0; j < 3; j++)
+            free(f[i].kernel[j]);
+        free(f[i].kernel);
+    }
+    free(f);     
 }
 
 void save_gray(unsigned char *filename, unsigned char **im, int height, int width, int ascii)
@@ -469,16 +476,16 @@ colored_image apply_pixel(filter *f, int type, colored_image **im, int x, int y)
     double val1 = 0, val2 = 0, val3 = 0;
     for (int i = 0; i < 3; i++)
         for(int j = 0; j < 3; j++) {
-            val1 += ((int)im[x + i][y + j].R) * f[type].kernel[i][j];
-            val2 += ((int)im[x + i][y + j].G) * f[type].kernel[i][j];
-            val3 += ((int)im[x + i][y + j].B) * f[type].kernel[i][j];
+            val1 += (1.0 * im[x + i][y + j].R) * f[type].kernel[i][j];
+            val2 += (1.0 * im[x + i][y + j].G) * f[type].kernel[i][j];
+            val3 += (1.0 * im[x + i][y + j].B) * f[type].kernel[i][j];
         }
     val1 = round(1.0 * val1 / f[type].divide);
     val2 = round(1.0 * val2 / f[type].divide);
     val3 = round(1.0 * val3 / f[type].divide);
     ans.R = clamp((int)val1, 0, 255);
-    ans.B = clamp((int)val2, 0, 255);
-    ans.G = clamp((int)val3, 0, 255);
+    ans.G = clamp((int)val2, 0, 255);
+    ans.B = clamp((int)val3, 0, 255);
 
     return ans;
 }
@@ -501,9 +508,9 @@ void apply_cmd(unsigned char *line, unsigned char **im_bw, unsigned char **im_gr
         if (strcmp(filter, f[i].name) == 0)
             type = i;
 
-    for (int i = y1; i <= y2 - 3; i++)
-        for (int j = x1; j <= x2 - 3; j++) {
-            im_color[i][j] = apply_pixel(f, type, im_color, i, j);
+    for (int i = y1 + 1; i <= y2 - 2; i++) // center of the block (i,j)
+        for (int j = x1 + 1; j <= x2 - 2; j++) {
+            im_color[i][j] = apply_pixel(f, type, im_color, i - 1, j - 1);
         }
 }
 
@@ -526,7 +533,7 @@ int main(void)
         else {
             if (strstr(line, "EXIT"))
             {
-                exit_cmd(im_bw, im_gray, im_color, height);
+                exit_cmd(im_bw, im_gray, im_color, height, my_filters);
                 break;
             } else {
                 if (strstr(line, "SAVE")) {
