@@ -508,10 +508,58 @@ void apply_cmd(unsigned char *line, unsigned char **im_bw, unsigned char **im_gr
         if (strcmp(filter, f[i].name) == 0)
             type = i;
 
+    colored_image **new_im = alloc_matrix_color(y2 - y1 - 1, x2 - x1 - 1);
+
     for (int i = y1 + 1; i <= y2 - 2; i++) // center of the block (i,j)
-        for (int j = x1 + 1; j <= x2 - 2; j++) {
-            im_color[i][j] = apply_pixel(f, type, im_color, i - 1, j - 1);
-        }
+        for (int j = x1 + 1; j <= x2 - 2; j++)
+            new_im[i - y1 - 1][j - x1 - 1] = apply_pixel(f, type, im_color, i - 1, j - 1);
+
+    for (int i = y1 + 1; i <= y2 - 2; i++) // center of the block (i,j)
+        for (int j = x1 + 1; j <= x2 - 2; j++)
+            im_color[i][j] = new_im[i - y1 - 1][j - x1 - 1];
+
+    free_matrix_color(new_im, y2 - y1 - 1);
+}
+
+unsigned char **crop_gray(unsigned char **im, int *height, int *width, int x1, int y1, int x2, int y2)
+{
+    unsigned char **new_im = alloc_matrix(y2 - y1, x2 - x1);
+    for (int i = y1; i < y2; i++)
+        for (int j = x1; j < x2; j++)
+            new_im[i - y1][j - x1] = im[i][j];
+    free_matrix_bw(im, *height);
+    *height = y2 - y1;
+    *width = x2 - x1;
+    
+    return new_im;
+}
+
+colored_image **crop_color(colored_image **im, int *height, int *width, int x1, int y1, int x2, int y2)
+{
+    colored_image **new_im = alloc_matrix_color(y2 - y1, x2 - x1);
+    for (int i = y1; i < y2; i++)
+        for (int j = x1; j < x2; j++)
+            new_im[i - y1][j - x1] = im[i][j];
+    free_matrix_color(im, *height);
+    *height = y2 - y1;
+    *width = x2 - x1;
+    
+    return new_im;
+}
+
+void crop_cmd(unsigned char ***im_bw, unsigned char ***im_gray, colored_image ***im_color, int *height, int *width, int x1, int y1, int x2, int y2)
+{
+    if (!check_existence(*im_bw, *im_gray, *im_color))
+        return;
+
+    if (*im_bw)
+        *im_bw = crop_gray(*im_bw, height, width, x1, y1, x2, y2);
+    else
+        if (*im_gray)
+            *im_gray = crop_gray(*im_gray, height, width, x1, y1, x2, y2);
+        else
+            *im_color = crop_color(*im_color, height, width, x1, y1, x2, y2);
+    printf("Image cropped\n");
 }
 
 int main(void)
@@ -550,6 +598,10 @@ int main(void)
                         else {
                             if (strstr(line, "APPLY")) {
                                 apply_cmd(line, im_bw, im_gray, im_color, x1, y1, x2, y2, my_filters);
+                            } else {
+                                if (strstr(line, "CROP")) {
+                                    crop_cmd(&im_bw, &im_gray, &im_color, &height, &width, x1, y1, x2, y2);
+                                }
                             }
                         }
                     }
