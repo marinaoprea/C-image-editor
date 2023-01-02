@@ -562,6 +562,100 @@ void crop_cmd(unsigned char ***im_bw, unsigned char ***im_gray, colored_image **
     printf("Image cropped\n");
 }
 
+long long *histogram(unsigned char **im, int height, int width, int stars, int bins)
+{
+    long long *hist = malloc(bins * sizeof(long));
+    for (int i = 0; i < bins; i++)
+        hist[i] = 0;
+
+    for (int i = 0; i < height; i++)
+        for (int j = 0; j < width; j++) {
+            int pixel = (int)im[i][j];
+            hist[(int)(pixel / (256 / bins))]++;
+        }
+
+    int max_hist = 0;
+    for (int i = 0; i < bins; i++)
+        if (hist[i] > max_hist)
+            max_hist = hist[i];
+
+    if (stars == -1)
+        stars = max_hist;
+    for (int i = 0; i < bins; i++)
+        hist[i] = (int)(hist[i] * stars / max_hist);
+
+    return hist;
+}
+
+void histogram_cmd(unsigned char *line, unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, int width)
+{
+    if (!check_existence(im_bw, im_gray, im_color))
+        return;
+    if (im_color) {
+        printf("Black and white image needed\n");
+        return;
+    }
+    unsigned char *aux = malloc(10 * sizeof(unsigned char));
+    int stars, bins;
+    int rc = sscanf(line, "%s%d%d", aux, &stars, &bins);
+    free(aux);
+    if (rc != 3 || bins <= 0 || bins > 256) {
+        printf("Invalid set of parameters\n");
+        return;
+    }
+    int y = bins;
+    while (y > 1)
+        y /= 2;
+    if (y != 1) {
+        printf("Invalid set of parameters\n");
+        return;
+    }
+    long long *hist;
+    if (im_bw != NULL)
+        hist = histogram(im_bw, height, width, stars, bins);
+    else
+        hist = histogram(im_gray, height, width, stars, bins);
+
+    for (int i = 0; i < bins; i++) {
+        printf("%lld\t|\t", hist[i]);
+        for (long long j = 0; j < hist[i]; j++)
+            printf("*");
+        printf("\n");
+    }
+
+    free(hist);
+}
+
+void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, int width)
+{
+    if (!check_existence(im_bw, im_gray, im_color))
+        return;
+    if (im_color) {
+        printf("Black and white image needed\n");
+        return;
+    }
+    unsigned char **im;
+    if (im_bw)
+        im = im_bw;
+    else
+        im = im_gray;
+    int bins = 256;
+    long long *hist = histogram(im, height, width, -1, bins);
+    long long *sum_part = malloc(bins * sizeof(long long));
+    sum_part[0] = hist[0];
+    for (int i = 1; i < bins; i++)
+        sum_part[i] = sum_part[i - 1] + hist[i];
+    int area = height * width;
+    for (int i = 0; i < height; i++)
+        for (int j = 0; j < width; j++) {
+            double pixel = 1.0 * sum_part[im[i][j]] / area * 255.0;
+            im[i][j] = clamp(round(pixel), 0, 255);
+        }
+    free(sum_part);
+    free(hist);
+    im = NULL;
+}
+
 int main(void)
 {
     unsigned char *line = malloc(100 * sizeof(unsigned char));
@@ -601,6 +695,14 @@ int main(void)
                             } else {
                                 if (strstr(line, "CROP")) {
                                     crop_cmd(&im_bw, &im_gray, &im_color, &height, &width, x1, y1, x2, y2);
+                                } else {
+                                    if (strstr(line, "HISTOGRAM")) {
+                                        histogram_cmd(line, im_bw, im_gray, im_color, height, width);
+                                    } else {
+                                        if (strstr(line, "EQUALIZE")) {
+                                            equalize_cmd(im_bw, im_gray, im_color, height, width);
+                                        }
+                                    }
                                 }
                             }
                         }
