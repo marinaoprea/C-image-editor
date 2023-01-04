@@ -435,9 +435,9 @@ void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width, int o
 
 void interschimba(int *x, int *y)
 {
-	int *aux = x;
-	x = y;
-	y = aux;
+	int aux = *x;
+	*x = *y;
+	*y = aux;
 }
 
 void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int width)
@@ -689,6 +689,110 @@ void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image 
 	printf("Equalize done\n");
 }
 
+unsigned char **rotate_full_bw(unsigned char **im, int *height, int *width)
+{
+	unsigned char **im_new = alloc_matrix(*width, *height);
+	for (int i = 0; i < *height; i++)
+		for (int j = 0; j < *width; j++)
+			im_new[j][*height - i - 1] = im[i][j];
+
+	free_matrix_bw(im, *height);
+	interschimba(height, width);
+	return im_new;
+}
+
+colored_image **rotate_full_color(colored_image **im, int *height, int *width)
+{
+	colored_image **im_new = alloc_matrix_color(*width, *height);
+	for (int i = 0; i < *height; i++)
+		for (int j = 0; j < *width; j++)
+			im_new[j][*height - i - 1] = im[i][j];
+
+	free_matrix_color(im, *height);
+	interschimba(height, width);
+	return im_new;
+}
+
+void rotate_bw(unsigned char ***im, int *x1, int *y1, int *x2, int *y2, int *height, int *width)
+{
+	if (*x1 == 0 && *x2 == *width && *y1 == 0 && *y2 == *height) {
+		*im = rotate_full_bw(*im, height, width);
+		interschimba(x2, y2);
+		return;
+	}
+	int dim = *x2 - *x1;
+	unsigned char **aux = alloc_matrix(dim, dim);
+	for (int i = *y1; i < *y2; i++)
+		for (int j = *x1; j < *x2; j++)
+			aux[j - *x1][dim - (i - *y1) - 1] = (*im)[i][j];
+	for (int i = *y1; i < *y2; i++)
+		for (int j = *x1; j < *x2; j++)
+			(*im)[i][j] = aux[i - *y1][j - *x1];
+	free_matrix_bw(aux, dim);
+}
+
+void rotate_color(colored_image ***im, int *x1, int *y1, int *x2, int *y2, int *height, int *width)
+{
+	if (*x1 == 0 && *x2 == *width && *y1 == 0 && *y2 == *height) {
+		*im = rotate_full_color(*im, height, width);
+		interschimba(x2, y2);
+		return;
+	}
+	int dim = *x2 - *x1;
+	colored_image **aux = alloc_matrix_color(dim, dim);
+	for (int i = *y1; i < *y2; i++)
+		for (int j = *x1; j < *x2; j++)
+			aux[j - *x1][dim - (i - *y1) - 1] = (*im)[i][j];
+	for (int i = *y1; i < *y2; i++)
+		for (int j = *x1; j < *x2; j++)
+			(*im)[i][j] = aux[i - *y1][j - *x1];
+	free_matrix_color(aux, dim);
+}
+
+void rotate_cmd(char *line, unsigned char ***im_bw, unsigned char ***im_gray, colored_image ***im_color, int *x1, int *y1, int *x2, int *y2, int *height, int *width)
+{
+	if (!check_existence(*im_bw, *im_gray, *im_color))
+		return;
+
+	char *aux = malloc(10 * sizeof(char));
+	int aux2, degrees;
+	int rc = sscanf(line, "%s%d%d", aux, &degrees, &aux2);
+	free(aux);
+	if (rc != 2) {
+		printf("Invalid command\n");
+		return;
+	}
+	if (degrees % 90 || degrees < -360 || degrees > 360) {
+		printf("Unsupported rotation angle\n");
+		return;
+	}
+	if ((*x1 != 0 || *x2 != *width || *y1 != 0 || *y2 != *height) && (*x2 - *x1 != *y2 - *y1)) {
+		printf("The selection must be square\n");
+		return;
+	}
+
+	if (degrees == 360 || degrees == -360 || degrees == 0) {
+		printf("Rotated %d\n", degrees);
+		return;
+	}
+
+	printf("Rotated %d\n", degrees);
+
+	if (degrees < 0)
+		degrees += 360;
+
+	if (*im_bw)
+		for (int i = 0; i < degrees / 90; i++)
+			rotate_bw(im_bw, x1, y1, x2, y2, height, width);
+	else
+		if (*im_gray) 
+			for (int i = 0; i < degrees / 90; i++)
+				rotate_bw(im_gray, x1, y1, x2, y2, height, width);
+		else
+			for (int i = 0; i < degrees / 90; i++)
+				rotate_color(im_color, x1, y1, x2, y2, height, width);
+}
+
 int main(void)
 {
 	char *line = malloc(100 * sizeof(unsigned char));
@@ -735,7 +839,11 @@ int main(void)
 										if (strstr(line, "EQUALIZE")) {
 											equalize_cmd(im_bw, im_gray, im_color, height, width);
 										} else {
+											if (strstr(line, "ROTATE")) {
+												rotate_cmd(line, &im_bw, &im_gray, &im_color, &x1, &y1, &x2, &y2, &height, &width);
+											} else {
 											printf("Invalid command\n");
+											}
 										}
 									}
 								}
