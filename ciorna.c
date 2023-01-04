@@ -446,7 +446,11 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int 
 	int x1nou, y1nou, x2nou, y2nou;
 	int rc = sscanf(line, "%s%d%d%d%d", aux2, &x1nou, &y1nou, &x2nou, &y2nou);
 	free(aux2);
-	if (rc != 5 || x1nou < 0 || x1nou >  width || y1nou < 0 || y1nou > height || x2nou < 0 || x2nou > width || y2nou < 0 || y2nou > height || x1nou == x2nou || y1nou == y2nou) {
+	if (rc != 5) {
+		printf("Invalid command\n");
+		return;
+	}
+	if (x1nou < 0 || x1nou >  width || y1nou < 0 || y1nou > height || x2nou < 0 || x2nou > width || y2nou < 0 || y2nou > height || x1nou == x2nou || y1nou == y2nou) {
 		printf("Invalid set of coordinates\n");
 		return;
 	}
@@ -620,8 +624,8 @@ void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, c
 	if (!check_existence(im_bw, im_gray, im_color))
 		return;
 	unsigned char *aux = malloc(10 * sizeof(unsigned char));
-	int stars, bins;
-	int rc = sscanf(line, "%s%d%d", aux, &stars, &bins);
+	int stars, bins, aux2;
+	int rc = sscanf(line, "%s%d%d%d", aux, &stars, &bins, &aux2);
 	free(aux);
 	if (rc != 3 || bins <= 0 || bins > 256) {
 		printf("Invalid command\n");
