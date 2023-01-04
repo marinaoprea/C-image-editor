@@ -271,9 +271,18 @@ void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray, 
 	int type = image_type(filename);
 
 	if (type == -1) {
-		*im_bw = NULL;
-		*im_gray = NULL;
-		*im_color = NULL;
+		if (*im_bw != NULL) {
+			free_matrix_bw(*im_bw, *height);
+			*im_bw = NULL;
+		}
+		if (*im_gray != NULL) {
+			free_matrix_bw(*im_gray, *height);
+			*im_gray = NULL;
+		}
+		if (*im_color != NULL) {
+			free_matrix_color(*im_color, *height);
+			*im_color = NULL;
+		}
 		return;
 	}
 
@@ -319,6 +328,14 @@ void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray, 
 
 void exit_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, filter *f)
 {
+	for (int i = 0; i < 4; i++) {
+		free(f[i].name);
+		for (int j = 0; j < 3; j++)
+			free(f[i].kernel[j]);
+		free(f[i].kernel);
+	}
+	free(f); 
+
 	if (!check_existence(im_bw, im_gray, im_color))
 		return;
 
@@ -327,14 +344,7 @@ void exit_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im
 	if (im_gray != NULL)
 		free_matrix_bw(im_gray, height);
 	if (im_color != NULL)
-		free_matrix_color(im_color, height);
-	for (int i = 0; i < 4; i++) {
-		free(f[i].name);
-		for (int j = 0; j < 3; j++)
-			free(f[i].kernel[j]);
-		free(f[i].kernel);
-	}
-	free(f);     
+		free_matrix_color(im_color, height);    
 }
 
 void save_gray(char *filename, unsigned char **im, int height, int width, int ascii)
@@ -440,7 +450,6 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int 
 		printf("Invalid set of coordinates\n");
 		return;
 	}
-	printf("Selected %d %d %d %d \n", x1nou, y1nou, x2nou, y2nou);
 	if (x1nou > x2nou)
 		interschimba(&x1nou, &x2nou);
 	if (y1nou > y2nou)
@@ -449,6 +458,7 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int 
 	*y1 = y1nou;
 	*x2 = x2nou;
 	*y2 = y2nou;
+	printf("Selected %d %d %d %d \n", x1nou, y1nou, x2nou, y2nou);
 }
 
 unsigned char clamp(int x, int low, int high)
@@ -484,7 +494,6 @@ void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, color
 {
 	line[strlen(line) - 1] = '\0';
 	char *filter = strstr(line, "APPLY") + strlen("APPLY") + 1;
-	int type;
 
 	if (!check_existence(im_bw, im_gray, im_color))
 		return;
@@ -499,9 +508,14 @@ void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, color
 		return;
 	}
 
+	int type = -1;
 	for (int i = 0; i < 4; i++)
 		if (strcmp(filter, f[i].name) == 0)
 			type = i;
+	if (type == -1) {
+		printf("APPLY parameter invalid\n");
+		return;
+	}
 
 	if (x1 == 0)
 		x1++;
@@ -515,7 +529,7 @@ void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, color
 	colored_image **new_im = alloc_matrix_color(y2 - y1, x2 - x1);
 
 	for (int i = y1; i < y2; i++) // center of the block (i,j)
-		for (int j = x1; j <= x2; j++)
+		for (int j = x1; j < x2; j++)
 			new_im[i - y1][j - x1] = apply_pixel(f, type, im_color, i - 1, j - 1);
 
 	for (int i = y1; i < y2; i++) // center of the block (i,j)
