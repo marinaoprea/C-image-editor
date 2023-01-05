@@ -103,7 +103,8 @@ int image_type(char *filename)
 	return ans;
 }
 
-int check_existence(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color)
+int check_existence(unsigned char **im_bw, unsigned char **im_gray,
+					colored_image **im_color)
 {
 	if (!im_bw && !im_gray && !im_color) {
 		printf("No image loaded\n");
@@ -271,7 +272,8 @@ void free_matrix_color(colored_image **a, int m)
 	free(a);
 }
 
-void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray, colored_image ***im_color, int *height, int *width)
+void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray,
+			  colored_image ***im_color, int *height, int *width)
 {
 	int type = image_type(filename);
 
@@ -330,7 +332,8 @@ void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray, 
 	printf("Loaded %s\n", filename);
 }
 
-void exit_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, filter *f)
+void exit_cmd(unsigned char **im_bw, unsigned char **im_gray,
+			  colored_image **im_color, int height, filter *f)
 {
 	for (int i = 0; i < 4; i++) {
 		free(f[i].name);
@@ -351,7 +354,8 @@ void exit_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im
 		free_matrix_color(im_color, height);
 }
 
-void save_gray(char *filename, unsigned char **im, int height, int width, int ascii)
+void save_gray(char *filename, unsigned char **im, int height, int width,
+			   int ascii)
 {
 	if (ascii == 1) {
 		FILE *out = fopen(filename, "wt");
@@ -373,7 +377,8 @@ void save_gray(char *filename, unsigned char **im, int height, int width, int as
 	}
 }
 
-void save_bw(char *filename, unsigned char **im, int height, int width, int ascii)
+void save_bw(char *filename, unsigned char **im, int height, int width,
+			 int ascii)
 {
 	if (ascii == 1) {
 		FILE *out = fopen(filename, "wt");
@@ -394,7 +399,8 @@ void save_bw(char *filename, unsigned char **im, int height, int width, int asci
 	}
 }
 
-void save_color(char *filename, colored_image **im, int height, int width, int ascii)
+void save_color(char *filename, colored_image **im, int height, int width,
+				int ascii)
 {
 	if (ascii == 1) {
 		FILE *out = fopen(filename, "wt");
@@ -402,7 +408,8 @@ void save_color(char *filename, colored_image **im, int height, int width, int a
 		fprintf(out, "255\n");
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++)
-				fprintf(out, "%hhu %hhu %hhu ", im[i][j].R, im[i][j].G, im[i][j].B);
+				fprintf(out, "%hhu %hhu %hhu ", im[i][j].R, im[i][j].G,
+						im[i][j].B);
 			fprintf(out, "\n");
 		}
 		fclose(out);
@@ -419,7 +426,8 @@ void save_color(char *filename, colored_image **im, int height, int width, int a
 	}
 }
 
-void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, int width)
+void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray,
+			  colored_image **im_color, int height, int width)
 {
 	if (!check_existence(im_bw, im_gray, im_color))
 		return;
@@ -446,7 +454,8 @@ void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray, color
 	printf("Saved %s\n", filename);
 }
 
-void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width, int output)
+void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width,
+				int output)
 {
 	*x1 = 0;
 	*y1 = 0;
@@ -463,7 +472,8 @@ void interschimba(int *x, int *y)
 	*y = aux;
 }
 
-void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int width)
+void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height,
+				int width)
 {
 	unsigned char *aux2 = malloc(10 * sizeof(unsigned char));
 	int x1nou, y1nou, x2nou, y2nou;
@@ -473,7 +483,9 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int 
 		printf("Invalid command\n");
 		return;
 	}
-	if (x1nou < 0 || x1nou >  width || y1nou < 0 || y1nou > height || x2nou < 0 || x2nou > width || y2nou < 0 || y2nou > height || x1nou == x2nou || y1nou == y2nou) {
+	if (x1nou < 0 || x1nou >  width || y1nou < 0 || y1nou > height ||
+		x2nou < 0 || x2nou > width || y2nou < 0 || y2nou > height ||
+		x1nou == x2nou || y1nou == y2nou) {
 		printf("Invalid set of coordinates\n");
 		return;
 	}
@@ -517,7 +529,9 @@ colored_image apply_pixel(filter *f, int type, colored_image **im, int x, int y)
 	return ans;
 }
 
-void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int x1, int y1, int x2, int y2, int height, int width, filter *f)
+void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray,
+			   colored_image **im_color, int x1, int y1, int x2, int y2,
+			   int height, int width, filter *f)
 {
 	line[strlen(line) - 1] = '\0';
 	char *filter = strstr(line, "APPLY") + strlen("APPLY") + 1;
@@ -557,7 +571,8 @@ void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, color
 
 	for (int i = y1; i < y2; i++) // center of the block (i,j)
 		for (int j = x1; j < x2; j++)
-			new_im[i - y1][j - x1] = apply_pixel(f, type, im_color, i - 1, j - 1);
+			new_im[i - y1][j - x1] = apply_pixel(f, type, im_color, i - 1,
+												 j - 1);
 
 	for (int i = y1; i < y2; i++) // center of the block (i,j)
 		for (int j = x1; j < x2; j++)
@@ -568,7 +583,8 @@ void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, color
 	printf("APPLY %s done\n", f[type].name);
 }
 
-unsigned char **crop_gray(unsigned char **im, int *height, int *width, int *x1, int *y1, int *x2, int *y2)
+unsigned char **crop_gray(unsigned char **im, int *height, int *width, int *x1,
+						  int *y1, int *x2, int *y2)
 {
 	unsigned char **new_im = alloc_matrix(*y2 - *y1, *x2 - *x1);
 	for (int i = *y1; i < *y2; i++)
@@ -585,7 +601,8 @@ unsigned char **crop_gray(unsigned char **im, int *height, int *width, int *x1, 
 	return new_im;
 }
 
-colored_image **crop_color(colored_image **im, int *height, int *width, int *x1, int *y1, int *x2, int *y2)
+colored_image **crop_color(colored_image **im, int *height, int *width,
+						   int *x1, int *y1, int *x2, int *y2)
 {
 	colored_image **new_im = alloc_matrix_color(*y2 - *y1, *x2 - *x1);
 	for (int i = *y1; i < *y2; i++)
@@ -602,7 +619,9 @@ colored_image **crop_color(colored_image **im, int *height, int *width, int *x1,
 	return new_im;
 }
 
-void crop_cmd(unsigned char ***im_bw, unsigned char ***im_gray, colored_image ***im_color, int *height, int *width, int *x1, int *y1, int *x2, int *y2)
+void crop_cmd(unsigned char ***im_bw, unsigned char ***im_gray,
+			  colored_image ***im_color, int *height, int *width, int *x1,
+			  int *y1, int *x2, int *y2)
 {
 	if (!check_existence(*im_bw, *im_gray, *im_color))
 		return;
@@ -617,7 +636,8 @@ void crop_cmd(unsigned char ***im_bw, unsigned char ***im_gray, colored_image **
 	printf("Image cropped\n");
 }
 
-long long *histogram(unsigned char **im, int height, int width, int stars, int bins)
+long long *histogram(unsigned char **im, int height, int width, int stars,
+					 int bins)
 {
 	long long *hist = malloc(bins * sizeof(long));
 	for (int i = 0; i < bins; i++)
@@ -642,7 +662,8 @@ long long *histogram(unsigned char **im, int height, int width, int stars, int b
 	return hist;
 }
 
-void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, int width)
+void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray,
+				   colored_image **im_color, int height, int width)
 {
 	if (!check_existence(im_bw, im_gray, im_color))
 		return;
@@ -681,7 +702,8 @@ void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, c
 	free(hist);
 }
 
-void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, int width)
+void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray,
+				  colored_image **im_color, int height, int width)
 {
 	if (!check_existence(im_bw, im_gray, im_color))
 		return;
@@ -736,7 +758,8 @@ colored_image **rotate_full_color(colored_image **im, int *height, int *width)
 	return im_new;
 }
 
-void rotate_bw(unsigned char ***im, int *x1, int *y1, int *x2, int *y2, int *height, int *width)
+void rotate_bw(unsigned char ***im, int *x1, int *y1, int *x2, int *y2,
+			   int *height, int *width)
 {
 	if (*x1 == 0 && *x2 == *width && *y1 == 0 && *y2 == *height) {
 		*im = rotate_full_bw(*im, height, width);
@@ -754,7 +777,8 @@ void rotate_bw(unsigned char ***im, int *x1, int *y1, int *x2, int *y2, int *hei
 	free_matrix_bw(aux, dim);
 }
 
-void rotate_color(colored_image ***im, int *x1, int *y1, int *x2, int *y2, int *height, int *width)
+void rotate_color(colored_image ***im, int *x1, int *y1, int *x2, int *y2,
+				  int *height, int *width)
 {
 	if (*x1 == 0 && *x2 == *width && *y1 == 0 && *y2 == *height) {
 		*im = rotate_full_color(*im, height, width);
@@ -772,7 +796,9 @@ void rotate_color(colored_image ***im, int *x1, int *y1, int *x2, int *y2, int *
 	free_matrix_color(aux, dim);
 }
 
-void rotate_cmd(char *line, unsigned char ***im_bw, unsigned char ***im_gray, colored_image ***im_color, int *x1, int *y1, int *x2, int *y2, int *height, int *width)
+void rotate_cmd(char *line, unsigned char ***im_bw, unsigned char ***im_gray,
+				colored_image ***im_color, int *x1, int *y1, int *x2, int *y2,
+				int *height, int *width)
 {
 	if (!check_existence(*im_bw, *im_gray, *im_color))
 		return;
@@ -789,7 +815,8 @@ void rotate_cmd(char *line, unsigned char ***im_bw, unsigned char ***im_gray, co
 		printf("Unsupported rotation angle\n");
 		return;
 	}
-	if ((*x1 != 0 || *x2 != *width || *y1 != 0 || *y2 != *height) && (*x2 - *x1 != *y2 - *y1)) {
+	if ((*x1 != 0 || *x2 != *width || *y1 != 0 || *y2 != *height) &&
+		(*x2 - *x1 != *y2 - *y1)) {
 		printf("The selection must be square\n");
 		return;
 	}
@@ -852,11 +879,13 @@ int main(void)
 			continue;
 		}
 		if (strstr(line, "APPLY")) {
-			apply_cmd(line, im_bw, im_gray, im_color, x1, y1, x2, y2, height, width, my_filters);
+			apply_cmd(line, im_bw, im_gray, im_color, x1, y1, x2, y2, height,
+					  width, my_filters);
 			continue;
 		}
 		if (strstr(line, "CROP")) {
-			crop_cmd(&im_bw, &im_gray, &im_color, &height, &width, &x1, &y1, &x2, &y2);
+			crop_cmd(&im_bw, &im_gray, &im_color, &height, &width, &x1, &y1,
+					 &x2, &y2);
 			continue;
 		}
 		if (strstr(line, "HISTOGRAM")) {
@@ -869,7 +898,8 @@ int main(void)
 		}
 
 		if (strstr(line, "ROTATE")) {
-			rotate_cmd(line, &im_bw, &im_gray, &im_color, &x1, &y1, &x2, &y2, &height, &width);
+			rotate_cmd(line, &im_bw, &im_gray, &im_color, &x1, &y1, &x2, &y2,
+					   &height, &width);
 			continue;
 		}
 		printf("Invalid command\n");
