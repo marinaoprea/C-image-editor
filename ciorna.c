@@ -26,12 +26,12 @@ int iscorner(int x, int y)
 	return 0;
 }
 
-filter *define_filters()
+filter *define_filters(void)
 {
 	filter *f = malloc(4 * sizeof(filter));
 	for (int i = 0; i < 4; i++) {
 		f[i].name = malloc(15 * sizeof(unsigned char));
-		f[i].kernel = malloc(3 * sizeof(int*));
+		f[i].kernel = malloc(3 * sizeof(int *));
 		for (int j = 0; j < 3; j++)
 			f[i].kernel[j] = malloc(3 * sizeof(int));
 	}
@@ -53,8 +53,7 @@ filter *define_filters()
 			if (iscorner(i, j)) {
 				f[1].kernel[i][j] = 0;
 				f[3].kernel[i][j] = 1;
-			} else
-			{
+			} else {
 				f[1].kernel[i][j] = -1;
 				f[3].kernel[i][j] = 2;
 			}
@@ -77,8 +76,7 @@ int image_type(char *filename)
 	}
 
 	fscanf(in, "P%d", &type);
-	switch (type)
-	{
+	switch (type) {
 	case 1:
 		ans = 0;
 		break;
@@ -107,7 +105,7 @@ int image_type(char *filename)
 
 int check_existence(unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color)
 {
-	if (im_bw == NULL && im_gray == NULL && im_color == NULL) {
+	if (!im_bw && !im_gray && !im_color) {
 		printf("No image loaded\n");
 		return 0;
 	}
@@ -118,14 +116,14 @@ unsigned char **alloc_matrix(int height, int width)
 {
 	unsigned char **a;
 	a = malloc(height * sizeof(unsigned char *));
-	if (a == NULL) {
+	if (!a) {
 		fprintf(stderr, "malloc() failed\n");
 		return NULL;
 	}
 
 	for (int i = 0; i < height; i++) {
 		a[i] = malloc(width * sizeof(unsigned char));
-		if (a[i] == NULL) {
+		if (!a[i]) {
 			fprintf(stderr, "malloc() failed\n");
 			i--;
 			while (i >= 0) {
@@ -143,14 +141,14 @@ colored_image **alloc_matrix_color(int height, int width)
 {
 	colored_image **a;
 	a = malloc(height * sizeof(colored_image *));
-	if (a == NULL) {
+	if (!a) {
 		fprintf(stderr, "malloc() failed\n");
 		return NULL;
 	}
 
 	for (int i = 0; i < height; i++) {
 		a[i] = malloc(width * sizeof(colored_image));
-		if (a[i] == NULL) {
+		if (!a[i]) {
 			fprintf(stderr, "malloc() failed\n");
 			i--;
 			while (i >= 0) {
@@ -164,40 +162,47 @@ colored_image **alloc_matrix_color(int height, int width)
 	return a;
 }
 
-unsigned char **load_bw(char *filename, int type, int *height, int *width) {
+unsigned char **load_bw(char *filename, int type, int *height, int *width)
+{
 	unsigned char **image;
 
-	if (type%10 == 0) {
+	if (type % 10 == 0) {
 		FILE *in = fopen(filename, "rt");
-		if (in == NULL)
+		if (!in)
 			return NULL;
 		unsigned char c;
 		int aux;
-		fscanf(in, "P%c%d%d%d\n", &c, width, height, &aux);
+		if (type >= 10)
+			fscanf(in, "P%c%d%d%d\n", &c, width, height, &aux);
+		else
+			fscanf(in, "P%c%d%d\n", &c, width, height);
 		image = alloc_matrix(*height, *width);
-		if (image == NULL)
+		if (!image)
 			return NULL;
 		for (int i = 0; i < *height; i++)
 			for (int j = 0; j < *width; j++) {
 				fscanf(in, "%d", &aux);
-				image[i][j] = (unsigned char) aux;
+				image[i][j] = (unsigned char)aux;
 			}
 		fclose(in);
 	} else {
 		FILE *in = fopen(filename, "r");
-		if (in == NULL)
+		if (!in)
 			return NULL;
 		int aux;
 		//unsigned char *aux2 = malloc(2 * sizeof(unsigned char));
 		int aux2;
-		fscanf(in, "P%d%d%d%d", &aux2, width, height, &aux);
+		if (type >= 10)
+			fscanf(in, "P%d%d%d%d", &aux2, width, height, &aux);
+		else
+			fscanf(in, "P%d%d%d", &aux2, width, height);
 		image = alloc_matrix(*height, *width);
-		if (image == NULL)
+		if (!image)
 			return NULL;
 		fseek(in, 1, SEEK_CUR);
 		for (int i = 0; i < *height; i++)
 			for (int j = 0; j < *width; j++)
-				fread(&(image[i][j]), sizeof(unsigned char), 1, in);
+				fread(&image[i][j], sizeof(unsigned char), 1, in);
 		//free(aux2);
 		fclose(in);
 	}
@@ -211,39 +216,39 @@ colored_image **load_color(char *filename, int type, int *height, int *width)
 
 	if (type % 10 == 0) {
 		FILE *in = fopen(filename, "rt");
-		if (in == NULL)
+		if (!in)
 			return NULL;
 		unsigned char c;
 		int auxr, auxg, auxb;
 		fscanf(in, "P%c%d%d%d\n", &c, width, height, &auxr);
 		image = alloc_matrix_color(*height, *width);
-		if (image == NULL)
+		if (!image)
 			return NULL;
 		for (int i = 0; i < *height; i++)
 			for (int j = 0; j < *width; j++) {
 				fscanf(in, "%d%d%d", &auxr, &auxg, &auxb);
-				image[i][j].R = (unsigned char) auxr;
-				image[i][j].G = (unsigned char) auxg;
-				image[i][j].B = (unsigned char) auxb;
+				image[i][j].R = (unsigned char)auxr;
+				image[i][j].G = (unsigned char)auxg;
+				image[i][j].B = (unsigned char)auxb;
 			}
 		fclose(in);
 	} else {
 		FILE *in = fopen(filename, "r");
-		if (in == NULL)
+		if (!in)
 			return NULL;
 		int aux;
 		//unsigned char *aux2 = malloc(2 * sizeof(unsigned char));
 		int aux2;
 		fscanf(in, "P%d%d%d%d", &aux2, width, height, &aux);
 		image = alloc_matrix_color(*height, *width);
-		if (image == NULL)
+		if (!image)
 			return NULL;
 		fseek(in, 1, SEEK_CUR);
 		for (int i = 0; i < *height; i++)
 			for (int j = 0; j < *width; j++) {
-				fread(&(image[i][j].R), sizeof(unsigned char), 1, in);
-				fread(&(image[i][j].G), sizeof(unsigned char), 1, in);
-				fread(&(image[i][j].B), sizeof(unsigned char), 1, in);
+				fread(&image[i][j].R, sizeof(unsigned char), 1, in);
+				fread(&image[i][j].G, sizeof(unsigned char), 1, in);
+				fread(&image[i][j].B, sizeof(unsigned char), 1, in);
 			}
 		//free(aux2);
 		fclose(in);
@@ -271,53 +276,52 @@ void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray, 
 	int type = image_type(filename);
 
 	if (type == -1) {
-		if (*im_bw != NULL) {
+		if (*im_bw) {
 			free_matrix_bw(*im_bw, *height);
 			*im_bw = NULL;
 		}
-		if (*im_gray != NULL) {
+		if (*im_gray) {
 			free_matrix_bw(*im_gray, *height);
 			*im_gray = NULL;
 		}
-		if (*im_color != NULL) {
+		if (*im_color) {
 			free_matrix_color(*im_color, *height);
 			*im_color = NULL;
 		}
 		return;
 	}
 
-	if (*im_bw != NULL) {
+	if (*im_bw) {
 		free_matrix_bw(*im_bw, *height);
 		*im_bw = NULL;
-	}
-	else
-		if (*im_gray != NULL) {
+	} else {
+		if (*im_gray) {
 			free_matrix_bw(*im_gray, *height);
 			*im_gray = NULL;
-		}
-		else
-			if (*im_color != NULL) {
+		} else {
+			if (*im_color) {
 				free_matrix_color(*im_color, *height);
 				*im_color = NULL;
 			}
+		}
+	}
 
 	if (type < 10) {
 		*im_bw = load_bw(filename, type, height, width);
-		if (*im_bw == NULL) {
+		if (!(*im_bw)) {
 			printf("Failed to load %s\n", filename);
 			return;
 		}
-	}
-	else {
+	} else {
 		if (type < 20) {
 			*im_gray = load_bw(filename, type, height, width);
-			if (*im_gray == NULL) {
+			if (!(*im_gray)) {
 				printf("Failed to load %s\n", filename);
 				return;
 			}
 		} else {
 			*im_color = load_color(filename, type, height, width);
-			if (*im_color == NULL) {
+			if (!(*im_color)) {
 				printf("Failed to load %s\n", filename);
 				return;
 			}
@@ -334,17 +338,17 @@ void exit_cmd(unsigned char **im_bw, unsigned char **im_gray, colored_image **im
 			free(f[i].kernel[j]);
 		free(f[i].kernel);
 	}
-	free(f); 
+	free(f);
 
 	if (!check_existence(im_bw, im_gray, im_color))
 		return;
 
-	if (im_bw != NULL)
+	if (im_bw)
 		free_matrix_bw(im_bw, height);
-	if (im_gray != NULL)
+	if (im_gray)
 		free_matrix_bw(im_gray, height);
-	if (im_color != NULL)
-		free_matrix_color(im_color, height);    
+	if (im_color)
+		free_matrix_color(im_color, height);
 }
 
 void save_gray(char *filename, unsigned char **im, int height, int width, int ascii)
@@ -364,7 +368,28 @@ void save_gray(char *filename, unsigned char **im, int height, int width, int as
 		fprintf(out, "P5\n%d %d\n255\n", width, height);
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
-				fwrite(&(im[i][j]), sizeof(unsigned char), 1, out);
+				fwrite(&im[i][j], sizeof(unsigned char), 1, out);
+		fclose(out);
+	}
+}
+
+void save_bw(char *filename, unsigned char **im, int height, int width, int ascii)
+{
+	if (ascii == 1) {
+		FILE *out = fopen(filename, "wt");
+		fprintf(out, "P1\n%d %d\n", width, height);
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++)
+				fprintf(out, "%hhu ", im[i][j]);
+			fprintf(out, "\n");
+		}
+		fclose(out);
+	} else {
+		FILE *out = fopen(filename, "w");
+		fprintf(out, "P4\n%d %d\n", width, height);
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++)
+				fwrite(&im[i][j], sizeof(unsigned char), 1, out);
 		fclose(out);
 	}
 }
@@ -386,9 +411,9 @@ void save_color(char *filename, colored_image **im, int height, int width, int a
 		fprintf(out, "P6\n%d %d\n255\n", width, height);
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++) {
-				fwrite(&(im[i][j].R), sizeof(unsigned char), 1, out);
-				fwrite(&(im[i][j].G), sizeof(unsigned char), 1, out);
-				fwrite(&(im[i][j].B), sizeof(unsigned char), 1, out);
+				fwrite(&im[i][j].R, sizeof(unsigned char), 1, out);
+				fwrite(&im[i][j].G, sizeof(unsigned char), 1, out);
+				fwrite(&im[i][j].B, sizeof(unsigned char), 1, out);
 			}
 		fclose(out);
 	}
@@ -396,10 +421,8 @@ void save_color(char *filename, colored_image **im, int height, int width, int a
 
 void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray, colored_image **im_color, int height, int width)
 {
-	if (im_bw == NULL && im_gray == NULL && im_color == NULL) {
-		printf("No image loaded\n");
+	if (!check_existence(im_bw, im_gray, im_color))
 		return;
-	}
 
 	char *filename;
 
@@ -409,13 +432,13 @@ void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray, color
 		filename = strtok(*line, " ");
 		filename = strtok(NULL, " ");
 	} else {
-			(*line)[strlen(*line) - 1] = '\0';
-			filename = strstr(*line, "SAVE") + strlen("SAVE") + 1;
+		(*line)[strlen(*line) - 1] = '\0';
+		filename = strstr(*line, "SAVE") + strlen("SAVE") + 1;
 	}
 
-   /* if (im_bw)
+	if (im_bw)
 		save_bw(filename, im_bw, height, width, ascii);
-	else*/
+	else
 		if (im_gray)
 			save_gray(filename, im_gray, height, width, ascii);
 			else
@@ -462,7 +485,7 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height, int 
 	*y1 = y1nou;
 	*x2 = x2nou;
 	*y2 = y2nou;
-	printf("Selected %d %d %d %d \n", x1nou, y1nou, x2nou, y2nou);
+	printf("Selected %d %d %d %d\n", x1nou, y1nou, x2nou, y2nou);
 }
 
 unsigned char clamp(int x, int low, int high)
@@ -479,7 +502,7 @@ colored_image apply_pixel(filter *f, int type, colored_image **im, int x, int y)
 	colored_image ans;
 	double val1 = 0., val2 = 0., val3 = 0.;
 	for (int i = 0; i < 3; i++)
-		for(int j = 0; j < 3; j++) {
+		for (int j = 0; j < 3; j++) {
 			val1 += (double)((int)im[x + i][y + j].R * f[type].kernel[i][j]);
 			val2 += (double)((int)im[x + i][y + j].G * f[type].kernel[i][j]);
 			val3 += (double)((int)im[x + i][y + j].B * f[type].kernel[i][j]);
@@ -575,7 +598,7 @@ colored_image **crop_color(colored_image **im, int *height, int *width, int *x1,
 	*y1 = 0;
 	*x2 = *width;
 	*y2 = *height;
-	
+
 	return new_im;
 }
 
@@ -643,7 +666,7 @@ void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray, c
 		return;
 	}
 	long long *hist;
-	if (im_bw != NULL)
+	if (im_bw)
 		hist = histogram(im_bw, height, width, stars, bins);
 	else
 		hist = histogram(im_gray, height, width, stars, bins);
@@ -785,7 +808,7 @@ void rotate_cmd(char *line, unsigned char ***im_bw, unsigned char ***im_gray, co
 		for (int i = 0; i < degrees / 90; i++)
 			rotate_bw(im_bw, x1, y1, x2, y2, height, width);
 	else
-		if (*im_gray) 
+		if (*im_gray)
 			for (int i = 0; i < degrees / 90; i++)
 				rotate_bw(im_gray, x1, y1, x2, y2, height, width);
 		else
@@ -805,57 +828,53 @@ int main(void)
 	while (fgets(line, 100, stdin)) {
 		if (strstr(line, "LOAD")) {
 			char *filename = strstr(line, "LOAD") + strlen("LOAD") + 1;
-			filename[strlen(filename)-1] = '\0';
+			filename[strlen(filename) - 1] = '\0';
 			load_cmd(filename, &im_bw, &im_gray, &im_color, &height, &width);
 			select_all(&x1, &y1, &x2, &y2, height, width, 0);
+			continue;
 		}
-		else {
-			if (strstr(line, "EXIT"))
-			{
-				exit_cmd(im_bw, im_gray, im_color, height, my_filters);
-				break;
-			} else {
-				if (strstr(line, "SAVE")) {
-					save_cmd(&line, im_bw, im_gray, im_color, height, width);
-				} else {
-					if (strstr(line, "SELECT ALL")) {
-						if (check_existence(im_bw, im_gray, im_color))
-							select_all(&x1, &y1, &x2, &y2, height, width, 1);
-					} else {
-						if (strstr(line, "SELECT")) {
-							if (check_existence(im_bw, im_gray, im_color))
-								select_cmd(line, &x1, &y1, &x2, &y2, height, width);
-						}
-						else {
-							if (strstr(line, "APPLY")) {
-								apply_cmd(line, im_bw, im_gray, im_color, x1, y1, x2, y2, height, width, my_filters);
-							} else {
-								if (strstr(line, "CROP")) {
-									crop_cmd(&im_bw, &im_gray, &im_color, &height, &width, &x1, &y1, &x2, &y2);
-								} else {
-									if (strstr(line, "HISTOGRAM")) {
-										histogram_cmd(line, im_bw, im_gray, im_color, height, width);
-									} else {
-										if (strstr(line, "EQUALIZE")) {
-											equalize_cmd(im_bw, im_gray, im_color, height, width);
-										} else {
-											if (strstr(line, "ROTATE")) {
-												rotate_cmd(line, &im_bw, &im_gray, &im_color, &x1, &y1, &x2, &y2, &height, &width);
-											} else {
-											printf("Invalid command\n");
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		if (strstr(line, "EXIT")) {
+			exit_cmd(im_bw, im_gray, im_color, height, my_filters);
+			break;
+		}
+		if (strstr(line, "SAVE")) {
+			save_cmd(&line, im_bw, im_gray, im_color, height, width);
+			continue;
+		}
+		if (strstr(line, "SELECT ALL")) {
+			if (check_existence(im_bw, im_gray, im_color))
+				select_all(&x1, &y1, &x2, &y2, height, width, 1);
+			continue;
+		}
+		if (strstr(line, "SELECT")) {
+			if (check_existence(im_bw, im_gray, im_color))
+				select_cmd(line, &x1, &y1, &x2, &y2, height, width);
+			continue;
+		}
+		if (strstr(line, "APPLY")) {
+			apply_cmd(line, im_bw, im_gray, im_color, x1, y1, x2, y2, height, width, my_filters);
+			continue;
+		}
+		if (strstr(line, "CROP")) {
+			crop_cmd(&im_bw, &im_gray, &im_color, &height, &width, &x1, &y1, &x2, &y2);
+			continue;
+		}
+		if (strstr(line, "HISTOGRAM")) {
+			histogram_cmd(line, im_bw, im_gray, im_color, height, width);
+			continue;
+		}
+		if (strstr(line, "EQUALIZE")) {
+			equalize_cmd(im_bw, im_gray, im_color, height, width);
+			continue;
 		}
 
-		free(line);
-		line = malloc(100 * sizeof(unsigned char));
+		if (strstr(line, "ROTATE")) {
+			rotate_cmd(line, &im_bw, &im_gray, &im_color, &x1, &y1, &x2, &y2, &height, &width);
+			continue;
+		}
+		printf("Invalid command\n");
+		/*free(line);
+		line = malloc(100 * sizeof(unsigned char));*/
 	}
 
 	free(line);
