@@ -5,7 +5,10 @@
 #include "op_on_color.h"
 #include "struct.h"
 #include "auxiliars.h"
+#include "commands.h"
 
+// function allocates color matrix
+// and returns pointer to its address
 colored_image **alloc_matrix_color(int height, int width)
 {
 	colored_image **a;
@@ -31,6 +34,7 @@ colored_image **alloc_matrix_color(int height, int width)
 	return a;
 }
 
+// function loads color matrix from file
 colored_image **load_color(char *filename, int type, int *height, int *width)
 {
 	colored_image **image;
@@ -78,6 +82,7 @@ colored_image **load_color(char *filename, int type, int *height, int *width)
 	return image;
 }
 
+// function frees allocated memory for color matrix
 void free_matrix_color(colored_image **a, int m)
 {
 	for (int i = 0; i < m; i++)
@@ -85,6 +90,7 @@ void free_matrix_color(colored_image **a, int m)
 	free(a);
 }
 
+// function saves color matrix to file given by name
 void save_color(char *filename, colored_image **im, int height, int width,
 				int ascii)
 {
@@ -112,6 +118,8 @@ void save_color(char *filename, colored_image **im, int height, int width,
 	}
 }
 
+// function that returns pixel value corresponding to image kernel application
+// on (x, y)-upper-lefted corner
 colored_image apply_pixel(filter *f, int type, colored_image **im, int x, int y)
 {
 	colored_image ans;
@@ -132,6 +140,10 @@ colored_image apply_pixel(filter *f, int type, colored_image **im, int x, int y)
 	return ans;
 }
 
+// function crops color matrix
+// allocates memory for the cropped version, deallocates the old one
+// and return address of new matrix
+// function updates current selection to the full cropped image
 colored_image **crop_color(colored_image **im, int *height, int *width,
 						   int *x1, int *y1, int *x2, int *y2)
 {
@@ -142,14 +154,13 @@ colored_image **crop_color(colored_image **im, int *height, int *width,
 	free_matrix_color(im, *height);
 	*height = *y2 - *y1;
 	*width = *x2 - *x1;
-	*x1 = 0;
-	*y1 = 0;
-	*x2 = *width;
-	*y2 = *height;
+	select_all(x1, y1, x2, y2, *height, *width, 0);
 
 	return new_im;
 }
 
+// function rotates the full matrix and returns a pointer to its new memory
+// address; it also deallocates memory of the old matrix
 colored_image **rotate_full_color(colored_image **im, int *height, int *width)
 {
 	colored_image **im_new = alloc_matrix_color(*width, *height);
@@ -162,6 +173,8 @@ colored_image **rotate_full_color(colored_image **im, int *height, int *width)
 	return im_new;
 }
 
+// function that calls full rotation function in case of full selection
+// or rotates a selection of the image
 void rotate_color(colored_image ***im, int *x1, int *y1, int *x2, int *y2,
 				  int *height, int *width)
 {

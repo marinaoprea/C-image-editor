@@ -3,6 +3,8 @@
 
 #include "struct.h"
 
+// header contains functions that deal with the given commands
+
 void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray,
 			  colored_image * **im_color, int *height, int *width);
 

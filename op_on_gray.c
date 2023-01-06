@@ -2,7 +2,10 @@
 #include <stdlib.h>
 
 #include "op_on_gray.h"
+#include "commands.h"
 
+// function allocates grayscale or black & white image matrix
+// and returns pointer to its address
 unsigned char **alloc_matrix(int height, int width)
 {
 	unsigned char **a;
@@ -28,6 +31,7 @@ unsigned char **alloc_matrix(int height, int width)
 	return a;
 }
 
+// function loads black & white matrix or grayscale matrix from file
 unsigned char **load_bw(char *filename, int type, int *height, int *width)
 {
 	unsigned char **image;
@@ -41,7 +45,7 @@ unsigned char **load_bw(char *filename, int type, int *height, int *width)
 		if (type >= 10)
 			fscanf(in, "P%c%d%d%d\n", &c, width, height, &aux);
 		else
-			fscanf(in, "P%c%d%d\n", &c, width, height);
+			fscanf(in, "P%c%d%d\n", &c, width, height); // for b & w
 		image = alloc_matrix(*height, *width);
 		if (!image)
 			return NULL;
@@ -56,7 +60,6 @@ unsigned char **load_bw(char *filename, int type, int *height, int *width)
 		if (!in)
 			return NULL;
 		int aux;
-		//unsigned char *aux2 = malloc(2 * sizeof(unsigned char));
 		int aux2;
 		if (type >= 10)
 			fscanf(in, "P%d%d%d%d", &aux2, width, height, &aux);
@@ -65,17 +68,17 @@ unsigned char **load_bw(char *filename, int type, int *height, int *width)
 		image = alloc_matrix(*height, *width);
 		if (!image)
 			return NULL;
-		fseek(in, 1, SEEK_CUR);
+		fseek(in, 1, SEEK_CUR); // parse over '\n'
 		for (int i = 0; i < *height; i++)
 			for (int j = 0; j < *width; j++)
 				fread(&image[i][j], sizeof(unsigned char), 1, in);
-		//free(aux2);
 		fclose(in);
 	}
 
 	return image;
 }
 
+// function frees allocated memory for b & w or grayscale matrix
 void free_matrix_bw(unsigned char **a, int m)
 {
 	for (int i = 0; i < m; i++)
@@ -83,6 +86,7 @@ void free_matrix_bw(unsigned char **a, int m)
 	free(a);
 }
 
+// function saves grayscale image matrix to file given by name
 void save_gray(char *filename, unsigned char **im, int height, int width,
 			   int ascii)
 {
@@ -106,6 +110,7 @@ void save_gray(char *filename, unsigned char **im, int height, int width,
 	}
 }
 
+// function saves b & w matrix to file given by name
 void save_bw(char *filename, unsigned char **im, int height, int width,
 			 int ascii)
 {
@@ -128,6 +133,10 @@ void save_bw(char *filename, unsigned char **im, int height, int width,
 	}
 }
 
+// function crops b & w or gray matrix
+// allocates memory for the cropped version, deallocates the old one
+// and return address of new matrix
+// function updates current selection to the full cropped image
 unsigned char **crop_gray(unsigned char **im, int *height, int *width, int *x1,
 						  int *y1, int *x2, int *y2)
 {
@@ -138,14 +147,17 @@ unsigned char **crop_gray(unsigned char **im, int *height, int *width, int *x1,
 	free_matrix_bw(im, *height);
 	*height = *y2 - *y1;
 	*width = *x2 - *x1;
-	*x1 = 0;
-	*y1 = 0;
-	*x2 = *width;
-	*y2 = *height;
+	select_all(x1, y1, x2, y2, *height, *width, 0);
 
 	return new_im;
 }
 
+// function returns an addres to the array containing the histogram values
+// calculated to specific number of bins, with specific number of
+// maximum "*" printed
+// 256 / bins represents values added to the same bin
+// pixel / (256 / bins) is the bin's index to which pixel contributes
+// we work on long long to avoid overflow
 long long *histogram(unsigned char **im, int height, int width, int stars,
 					 int bins)
 {
@@ -172,6 +184,8 @@ long long *histogram(unsigned char **im, int height, int width, int stars,
 	return hist;
 }
 
+// function rotates the full matrix and returns a pointer to its new memory
+// address; it also deallocates memory of the old matrix
 unsigned char **rotate_full_bw(unsigned char **im, int *height, int *width)
 {
 	unsigned char **im_new = alloc_matrix(*width, *height);
@@ -184,6 +198,8 @@ unsigned char **rotate_full_bw(unsigned char **im, int *height, int *width)
 	return im_new;
 }
 
+// function that calls full rotation function in case of full selection
+// or rotates a selection of the image
 void rotate_bw(unsigned char ***im, int *x1, int *y1, int *x2, int *y2,
 			   int *height, int *width)
 {

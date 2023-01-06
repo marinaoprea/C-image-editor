@@ -3,6 +3,8 @@
 
 #include "auxiliars.h"
 
+// header functions implement b & w and grayscale image operations
+
 unsigned char **alloc_matrix(int height, int width);
 
 unsigned char **load_bw(char *filename, int type, int *height, int *width);

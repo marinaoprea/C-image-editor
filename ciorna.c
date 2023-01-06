@@ -5,6 +5,16 @@
 #include "auxiliars.h"
 #include "commands.h"
 
+// im_bw, im_gray, im_color are the 3 pointers which contain the adresses
+// of the matrixes which contain the images' pixels
+// at any moment, only one of them is nonzero
+// x1, x2, y1, y2 are the coordinates of the current selection, determined by
+// (x1, y1) - upper-left corner, (x2, y2) - upper-right corner
+// note that Ox axis is along image width, while Oy axis is along image height
+// height and width are the image's dimensions
+// line is the input text line read from stdin, from which we identify the
+// command and its parameters
+
 int main(void)
 {
 	char *line = malloc(100 * sizeof(unsigned char));

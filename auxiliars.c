@@ -4,6 +4,10 @@
 #include "auxiliars.h"
 #include "struct.h"
 
+// function applied to coordinates (x, y) of an image kernel
+// requires 0 <= x, y <= 2
+// function returns 1 whether (x, y) in the corner of the kernel and
+// 0 otherwise
 int iscorner(int x, int y)
 {
 	if (x == 0 && y == 0)
@@ -17,6 +21,8 @@ int iscorner(int x, int y)
 	return 0;
 }
 
+// function returns 1 whether character x is a space( , \t, \n) and 0
+// otherwise
 int is_space(char x)
 {
 	if (x == ' ' || x == '\n' || x == '\t')
@@ -24,6 +30,10 @@ int is_space(char x)
 	return 0;
 }
 
+// function that allocs memory for an array of 4 specific filters and returns
+// a pointer to the memory address of the array
+// both fields name and kernel are dinamically allocated and should be freed
+// after usage
 filter *define_filters(void)
 {
 	filter *f = malloc(4 * sizeof(filter));
@@ -63,6 +73,15 @@ filter *define_filters(void)
 	return f;
 }
 
+// function that returns the type of a ppm or pgm image based on the magic word
+// existing in the file given as parameter by its name
+// type is encoded through a 2 digit number as follows:
+// first digit = 0 for black and white images
+// first digit = 1 for grayscale images
+// first digit = 2 for color images
+// last digit = 0 for ascii input
+// last digit = 1 for binary input
+// type = -1 if the file is nonexistent or could not be opened
 int image_type(char *filename)
 {
 	int type, ans;
@@ -101,6 +120,9 @@ int image_type(char *filename)
 	return ans;
 }
 
+// function that checks if there is any image loaded and prints the
+// error message otherwise
+// furthermore, function returns 1 if an image exists and 0 otherwise
 int check_existence(unsigned char **im_bw, unsigned char **im_gray,
 					colored_image **im_color)
 {
@@ -111,6 +133,9 @@ int check_existence(unsigned char **im_bw, unsigned char **im_gray,
 	return 1;
 }
 
+// function that swaps the int values indicated by the addresses given
+// as parameters
+// function does not swap the memory addreses
 void swap_int_values(int *x, int *y)
 {
 	int aux = *x;
@@ -118,6 +143,9 @@ void swap_int_values(int *x, int *y)
 	*y = aux;
 }
 
+// function that avoids overflow when working with unsigned chars
+// function returns minimum type value in case of underflow and
+// maximum type value in case of overflow
 unsigned char clamp(int x, int low, int high)
 {
 	if (x < low)

@@ -4,6 +4,8 @@
 #include "struct.h"
 #include "auxiliars.h"
 
+// header functions implement color image operations
+
 colored_image * *alloc_matrix_color(int height, int width);
 
 colored_image **load_color(char *filename, int type, int *height, int *width);

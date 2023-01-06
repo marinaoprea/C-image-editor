@@ -8,6 +8,10 @@
 #include "op_on_gray.h"
 #include "op_on_color.h"
 
+// function that deals with image loading
+// function deallocates memory of previously loaded image
+// function primarily prints error messages and then calls the specific
+// functions for the image type
 void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray,
 			  colored_image ***im_color, int *height, int *width)
 {
@@ -68,6 +72,8 @@ void load_cmd(char *filename, unsigned char ***im_bw, unsigned char ***im_gray,
 	printf("Loaded %s\n", filename);
 }
 
+// function that deallocates everything as final step of running the programm
+// filter structure is taken care of regardless of image existence
 void exit_cmd(unsigned char **im_bw, unsigned char **im_gray,
 			  colored_image **im_color, int height, filter *f)
 {
@@ -90,6 +96,9 @@ void exit_cmd(unsigned char **im_bw, unsigned char **im_gray,
 		free_matrix_color(im_color, height);
 }
 
+// function that saves an image to the file given as parameter by its name
+// (int)ascii = 1 whether we save the output in ascii mode and (int)ascii = 0
+// otherwise (binary mode)
 void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray,
 			  colored_image **im_color, int height, int width)
 {
@@ -107,9 +116,9 @@ void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray,
 		(*line)[strlen(*line) - 1] = '\0';
 		filename = strstr(*line, "SAVE") + strlen("SAVE") + 1;
 		while (is_space(filename[0]))
-			filename++;
+			filename++; // avoid whitespaces at the beginning of filename
 		while (is_space(filename[strlen(filename) - 1]))
-			filename[strlen(filename) - 1] = '\0';
+			filename[strlen(filename) - 1] = '\0'; // same for the end
 	}
 
 	if (im_bw)
@@ -122,6 +131,11 @@ void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray,
 	printf("Saved %s\n", filename);
 }
 
+// function that updates current selection to that of the full image
+// selection coordinates are given by address in order to maintain changes
+// after function call ended
+// (int) output = 1 for succeeded message, 0 otherwise
+// function extends full selection beyond "SELECT ALL" command
 void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width,
 				int output)
 {
@@ -133,6 +147,15 @@ void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width,
 		printf("Selected ALL\n");
 }
 
+// function that updates current selection to the coordinates given as command
+// parameters, passed by input line
+// selection coordinates are given by addres in order to maintain changes
+// note that selection is considered (x, y), x1 <= x < x2, y1 <= y < y2
+// note that we assure that (x1, y1) represents upper left corner and
+// (x2, y2) represents upper right corner
+// thus, x1 < x2, y1 < y2 is assured at the end of function call regardless
+// of input order
+// rc stands for return code
 void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height,
 				int width)
 {
@@ -140,7 +163,7 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height,
 	int x1nou, y1nou, x2nou, y2nou;
 	int rc = sscanf(line, "%s%d%d%d%d", aux2, &x1nou, &y1nou, &x2nou, &y2nou);
 	free(aux2);
-	if (rc != 5) {
+	if (rc != 5) { // wrong number of parameters given as input
 		printf("Invalid command\n");
 		return;
 	}
@@ -161,6 +184,16 @@ void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height,
 	printf("Selected %d %d %d %d\n", x1nou, y1nou, x2nou, y2nou);
 }
 
+// function that calls pixel application of filter given as parameter in input
+// command
+// function allocates a new matrix for the selected surface to avoid
+// kernel applications interfering with each other
+// (i, j) represents the center of the current block, but we give (i - 1, j - 1)
+// as upper left coordinates of the block for pixel apply function
+// pixels on the image borders don't have enough neighbours so they remain
+// unaffected; thus we change the local selection accordingly
+// global selection is not affected as x1, y1, x2, y2 parameters are given by
+// value
 void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray,
 			   colored_image **im_color, int x1, int y1, int x2, int y2,
 			   int height, int width, filter *f)
@@ -215,6 +248,11 @@ void apply_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray,
 	printf("APPLY %s done\n", f[type].name);
 }
 
+// function crops image according to current selection
+// function calls specific functions for image type
+// the memory adress of the image is changed, being reallocated
+// thus the usage of triple pointer, for changes on the matrix address
+// to be visible after end of function call
 void crop_cmd(unsigned char ***im_bw, unsigned char ***im_gray,
 			  colored_image ***im_color, int *height, int *width, int *x1,
 			  int *y1, int *x2, int *y2)
@@ -232,6 +270,9 @@ void crop_cmd(unsigned char ***im_bw, unsigned char ***im_gray,
 	printf("Image cropped\n");
 }
 
+// function that prints error messages, calls for histogram calculation
+// and the prints it accordingly
+// rc = return code
 void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray,
 				   colored_image **im_color, int height, int width)
 {
@@ -272,6 +313,10 @@ void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray,
 	free(hist);
 }
 
+// function that equalizes grayscale and black&white images
+// function works on the image in-place, thus matrix is passed by
+// double pointer
+// we use round function to approximate to nearest int value
 void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray,
 				  colored_image **im_color, int height, int width)
 {
@@ -304,6 +349,14 @@ void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray,
 	printf("Equalize done\n");
 }
 
+// function that deals with image/selection rotation
+// we rotate with 90 degrees to the right repeatedly in order to obtain
+// the desired result
+// negative degrees, meaning rotation to the left, are complementary converted
+// in order to apply right-sensed rotation
+// by full rotation, the image's matrix is reallocated, thus we pass image
+// addresses as triple pointers, in order to maintain the result visible
+// selection rotation is permitted only on square selections
 void rotate_cmd(char *line, unsigned char ***im_bw, unsigned char ***im_gray,
 				colored_image ***im_color, int *x1, int *y1, int *x2, int *y2,
 				int *height, int *width)
@@ -330,7 +383,7 @@ void rotate_cmd(char *line, unsigned char ***im_bw, unsigned char ***im_gray,
 	}
 
 	if (degrees == 360 || degrees == -360 || degrees == 0) {
-		printf("Rotated %d\n", degrees);
+		printf("Rotated %d\n", degrees); // image remains the same
 		return;
 	}
 

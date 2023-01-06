@@ -4,6 +4,8 @@
 #include "auxiliars.h"
 #include "struct.h"
 
+// header that contains auxiliary functions for solving the querries
+
 int iscorner(int x, int y);
 
 int is_space(char x);
