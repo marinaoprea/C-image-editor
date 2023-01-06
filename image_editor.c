@@ -19,8 +19,6 @@ int main(void)
 			char *filename = strstr(line, "LOAD") + strlen("LOAD") + 1;
 			while (is_space(filename[strlen(filename) - 1]) == 1)
 				filename[strlen(filename) - 1] = '\0';
-			while (is_space(filename[0]))
-				filename++;
 			load_cmd(filename, &im_bw, &im_gray, &im_color, &height, &width);
 			select_all(&x1, &y1, &x2, &y2, height, width, 0);
 			continue;
