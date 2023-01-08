@@ -9,7 +9,7 @@
 // of the matrixes which contain the images' pixels
 // at any moment, only one of them is nonzero
 // x1, x2, y1, y2 are the coordinates of the current selection, determined by
-// (x1, y1) - upper-left corner, (x2, y2) - upper-right corner
+// (x1, y1) - upper-left corner, (x2, y2) - down-right corner
 // note that Ox axis is along image width, while Oy axis is along image height
 // height and width are the image's dimensions
 // line is the input text line read from stdin, from which we identify the

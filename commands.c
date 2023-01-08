@@ -134,7 +134,7 @@ void save_cmd(char **line, unsigned char **im_bw, unsigned char **im_gray,
 // function that updates current selection to that of the full image
 // selection coordinates are given by address in order to maintain changes
 // after function call ended
-// (int) output = 1 for succeeded message, 0 otherwise
+// (int) output = 1 for printing succeess message, 0 otherwise
 // function extends full selection beyond "SELECT ALL" command
 void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width,
 				int output)
@@ -152,7 +152,7 @@ void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width,
 // selection coordinates are given by addres in order to maintain changes
 // note that selection is considered (x, y), x1 <= x < x2, y1 <= y < y2
 // note that we assure that (x1, y1) represents upper left corner and
-// (x2, y2) represents upper right corner
+// (x2, y2) represents down right corner
 // thus, x1 < x2, y1 < y2 is assured at the end of function call regardless
 // of input order
 // rc stands for return code
@@ -316,6 +316,8 @@ void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray,
 // function that equalizes grayscale and black&white images
 // function works on the image in-place, thus matrix is passed by
 // double pointer
+// function works with the histogram based on 256 bins, one for each
+// possible pixel value
 // we use round function to approximate to nearest int value
 void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray,
 				  colored_image **im_color, int height, int width)
