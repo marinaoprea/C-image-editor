@@ -1,3 +1,5 @@
+// Copyright Marina Oprea 313CAb 2022-2023
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,20 +7,34 @@
 #include "auxiliars.h"
 #include "commands.h"
 
+#define LINE_LENG 100
+
+// im_bw, im_gray, im_color are the 3 pointers which contain the adresses
+// of the matrixes which contain the images' pixels
+// at any moment, only one of them is nonzero
+// x1, x2, y1, y2 are the coordinates of the current selection, determined by
+// (x1, y1) - upper-left corner, (x2, y2) - down-right corner
+// note that Ox axis is along image width, while Oy axis is along image height
+// height and width are the image's dimensions
+// line is the input text line read from stdin, from which we identify the
+// command and its parameters
+
 int main(void)
 {
-	char *line = malloc(100 * sizeof(unsigned char));
+	char *line = malloc(LINE_LENG * sizeof(unsigned char));
 	unsigned char **im_bw = NULL, **im_gray = NULL;
 	colored_image **im_color = NULL;
 	int height = 0, width = 0;
 	int x1, x2, y1, y2;
 	filter *my_filters = define_filters();
 
-	while (fgets(line, 100, stdin)) {
+	while (fgets(line, LINE_LENG, stdin)) {
 		if (strstr(line, "LOAD")) {
 			char *filename = strstr(line, "LOAD") + strlen("LOAD") + 1;
 			while (is_space(filename[strlen(filename) - 1]) == 1)
 				filename[strlen(filename) - 1] = '\0';
+			while (is_space(filename[0]))
+				filename++;
 			load_cmd(filename, &im_bw, &im_gray, &im_color, &height, &width);
 			select_all(&x1, &y1, &x2, &y2, height, width, 0);
 			continue;
@@ -66,8 +82,6 @@ int main(void)
 			continue;
 		}
 		printf("Invalid command\n");
-		/*free(line);
-		line = malloc(100 * sizeof(unsigned char));*/
 	}
 
 	free(line);

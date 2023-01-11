@@ -1,3 +1,5 @@
+// Copyright Marina Oprea 313CAb 2022-2023
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -159,7 +161,7 @@ void select_all(int *x1, int *y1, int *x2, int *y2, int height, int width,
 void select_cmd(char *line, int *x1, int *y1, int *x2, int *y2, int height,
 				int width)
 {
-	unsigned char *aux2 = malloc(10 * sizeof(unsigned char));
+	unsigned char *aux2 = malloc(COMM_LENG * sizeof(unsigned char));
 	int x1nou, y1nou, x2nou, y2nou;
 	int rc = sscanf(line, "%s%d%d%d%d", aux2, &x1nou, &y1nou, &x2nou, &y2nou);
 	free(aux2);
@@ -278,11 +280,11 @@ void histogram_cmd(char *line, unsigned char **im_bw, unsigned char **im_gray,
 {
 	if (!check_existence(im_bw, im_gray, im_color))
 		return;
-	unsigned char *aux = malloc(10 * sizeof(unsigned char));
+	unsigned char *aux = malloc(COMM_LENG * sizeof(unsigned char));
 	int stars, bins, aux2;
 	int rc = sscanf(line, "%s%d%d%d", aux, &stars, &bins, &aux2);
 	free(aux);
-	if (rc != 3 || bins <= 0 || bins > 256) {
+	if (rc != 3 || bins <= 0 || bins > MAX_BINS) {
 		printf("Invalid command\n");
 		return;
 	}
@@ -333,7 +335,7 @@ void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray,
 		im = im_bw;
 	else
 		im = im_gray;
-	int bins = 256;
+	int bins = MAX_BINS;
 	long long *hist = histogram(im, height, width, -1, bins);
 	long long *sum_part = malloc(bins * sizeof(long long));
 	sum_part[0] = hist[0];
@@ -342,8 +344,8 @@ void equalize_cmd(unsigned char **im_bw, unsigned char **im_gray,
 	int area = height * width;
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++) {
-			double pixel = 1.0 * sum_part[im[i][j]] / area * 255.0;
-			im[i][j] = clamp(round(pixel), 0, 255);
+			double pixel = 1.0 * sum_part[im[i][j]] / area * MAX_VAL;
+			im[i][j] = clamp(round(pixel), 0, MAX_VAL);
 		}
 	free(sum_part);
 	free(hist);

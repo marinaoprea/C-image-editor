@@ -1,3 +1,5 @@
+// Copyright Marina Oprea 313CAb 2022-2023
+
 #ifndef __STRUCT__
 #define __STRUCT__
 

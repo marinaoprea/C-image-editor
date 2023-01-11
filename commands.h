@@ -1,7 +1,12 @@
+// Copyright Marina Oprea 313CAb 2022-2023
+
 #ifndef __COMMANDS__
 #define __COMMANDS__
 
 #include "struct.h"
+#define MAX_VAL 255
+#define MAX_BINS 256
+#define COMM_LENG 10 //command length
 
 // header contains functions that deal with the given commands
 

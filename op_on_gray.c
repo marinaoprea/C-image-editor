@@ -1,3 +1,5 @@
+// Copyright Marina Oprea 313CAb 2022-2023
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -93,7 +95,7 @@ void save_gray(char *filename, unsigned char **im, int height, int width,
 	if (ascii == 1) {
 		FILE *out = fopen(filename, "wt");
 		fprintf(out, "P2\n%d %d\n", width, height);
-		fprintf(out, "255\n");
+		fprintf(out, "%d\n", MAX_VAL);
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++)
 				fprintf(out, "%hhu ", im[i][j]);
@@ -102,7 +104,7 @@ void save_gray(char *filename, unsigned char **im, int height, int width,
 		fclose(out);
 	} else {
 		FILE *out = fopen(filename, "w");
-		fprintf(out, "P5\n%d %d\n255\n", width, height);
+		fprintf(out, "P5\n%d %d\n%d\n", width, height, MAX_VAL);
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				fwrite(&im[i][j], sizeof(unsigned char), 1, out);
@@ -168,7 +170,7 @@ long long *histogram(unsigned char **im, int height, int width, int stars,
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++) {
 			int pixel = (int)im[i][j];
-			hist[(int)(pixel / (256 / bins))]++;
+			hist[(int)(pixel / (MAX_BINS / bins))]++;
 		}
 
 	int max_hist = 0;

@@ -1,3 +1,5 @@
+// Copyright Marina Oprea 313CAb 2022-2023
+
 	The current source proposes a solution for a somewhat simple image editor
 working with ppm and pgm image formats. The programm's behaviour is determined
 by the user's commands, read from standard input under specific format.
@@ -20,7 +22,8 @@ the current image version being saved.
 
 SAVE command:
 	based on the user's choice, the current image version is saved in a file
-either in ascii mode or in binary mode. Based on the image type, the saved file fits the ppm or pgm standards. Save command does not deallocate resources.
+either in ascii mode or in binary mode. Based on the image type, the saved 
+file fits the ppm or pgm standards. Save command does not deallocate resources.
 
 SELECT ALL command:
 	this command updates current image salection to one of the full image. After

@@ -1,3 +1,5 @@
+// Copyright Marina Oprea 313CAb 2022-2023
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -62,7 +64,6 @@ colored_image **load_color(char *filename, int type, int *height, int *width)
 		if (!in)
 			return NULL;
 		int aux;
-		//unsigned char *aux2 = malloc(2 * sizeof(unsigned char));
 		int aux2;
 		fscanf(in, "P%d%d%d%d", &aux2, width, height, &aux);
 		image = alloc_matrix_color(*height, *width);
@@ -75,7 +76,6 @@ colored_image **load_color(char *filename, int type, int *height, int *width)
 				fread(&image[i][j].G, sizeof(unsigned char), 1, in);
 				fread(&image[i][j].B, sizeof(unsigned char), 1, in);
 			}
-		//free(aux2);
 		fclose(in);
 	}
 
@@ -97,7 +97,7 @@ void save_color(char *filename, colored_image **im, int height, int width,
 	if (ascii == 1) {
 		FILE *out = fopen(filename, "wt");
 		fprintf(out, "P3\n%d %d\n", width, height);
-		fprintf(out, "255\n");
+		fprintf(out, "%d\n", MAX_VAL);
 		for (int i = 0; i < height; i++) {
 			for (int j = 0; j < width; j++)
 				fprintf(out, "%hhu %hhu %hhu ", im[i][j].R, im[i][j].G,
@@ -107,7 +107,7 @@ void save_color(char *filename, colored_image **im, int height, int width,
 		fclose(out);
 	} else {
 		FILE *out = fopen(filename, "w");
-		fprintf(out, "P6\n%d %d\n255\n", width, height);
+		fprintf(out, "P6\n%d %d\n%d\n", width, height, MAX_VAL);
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++) {
 				fwrite(&im[i][j].R, sizeof(unsigned char), 1, out);
@@ -133,9 +133,9 @@ colored_image apply_pixel(filter *f, int type, colored_image **im, int x, int y)
 	val1 = round(val1 / (double)f[type].divide);
 	val2 = round(val2 / (double)f[type].divide);
 	val3 = round(val3 / (double)f[type].divide);
-	ans.R = clamp(val1, 0, 255);
-	ans.G = clamp(val2, 0, 255);
-	ans.B = clamp(val3, 0, 255);
+	ans.R = clamp(val1, 0, MAX_VAL);
+	ans.G = clamp(val2, 0, MAX_VAL);
+	ans.B = clamp(val3, 0, MAX_VAL);
 
 	return ans;
 }
